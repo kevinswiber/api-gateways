@@ -42,9 +42,7 @@ const prefetch = async () => {
   let pmTech = '';
 
   if (process.env.PM_TECH) {
-    pmTech = await fetchPmTech();
-
-    pmTech = pmTech;
+    pmTech = sh.exec('cat scripts/pmt.js').stdout;
 
     sh.exec('mkdir -p public');
 
@@ -75,28 +73,20 @@ const prefetch = async () => {
   const script = (process.env.PM_TECH
       && `
 ${pmTech}
-if (typeof window.pm.scalp !== 'function') {
-  window.pm.setScalp({
-    property: 'api-gateways'
-  });
-}
-window.pm.driveCampaignId();
-function isPmTechAllowed(documentLocationPathname) {
-  return ${allowedPmTech[0] === '*' ||
-    allowedPmTech.indexOf(documentLocationPathname) !== -1};
-}
-var d = 1000, int;
-var int = setInterval(function(){
-  if (document.body) {
-    window.pm.scalp(
+setTimeout(function(){
+  var propertyName = 'api-gateways';
+  if (window.pmt) {
+    window.pmt('setScalp', [{
+      property: propertyName
+    }]);
+    window.pmt('scalp', [
       'pm-analytics',
       'load',
       document.location.pathname
-    );
-    window.pm.trackClicks();
-    clearInterval(int);
+    ]);
+    window.pmt('trackClicks');
   }
-}, d);
+}, 1000);
     `)
     || `
       console.info('Postman OSS');
